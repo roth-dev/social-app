@@ -8,12 +8,13 @@ import {useNavigation} from '@react-navigation/native'
 import {NavigationProp} from '#/lib/routes/types'
 import {toShortUrl} from '#/lib/strings/url-helpers'
 import {isNative} from '#/platform/detection'
-import {atoms as a, flatten, native, TextStyleProp, useTheme, web} from '#/alf'
+import {atoms as a, flatten, native, TextStyleProp, web} from '#/alf'
 import {useInteractionState} from '#/components/hooks/useInteractionState'
 import {InlineLinkText, LinkProps} from '#/components/Link'
 import {ProfileHoverCard} from '#/components/ProfileHoverCard'
 import {TagMenu, useTagMenuControl} from '#/components/TagMenu'
 import {Text, TextProps} from '#/components/Typography'
+import {useDynamicColor} from './hooks/useDynamicColor'
 
 const WORD_WRAP = {wordWrap: 1}
 
@@ -28,6 +29,7 @@ export type RichTextProps = TextStyleProp &
     onLinkPress?: LinkProps['onPress']
     interactiveStyle?: TextStyle
     emojiMultiplier?: number
+    dynamicColor?: boolean
   }
 
 export function RichText({
@@ -42,6 +44,7 @@ export function RichText({
   onLinkPress,
   interactiveStyle,
   emojiMultiplier = 1.85,
+  dynamicColor = false,
 }: RichTextProps) {
   const richText = React.useMemo(
     () =>
@@ -49,11 +52,14 @@ export function RichText({
     [value],
   )
 
+  const interactiveColor = useDynamicColor({enabled: dynamicColor})
+
   const flattenedStyle = flatten(style)
   const plainStyles = [a.leading_snug, flattenedStyle]
   const interactiveStyles = [
     a.leading_snug,
     a.pointer_events_auto,
+    interactiveColor,
     flatten(interactiveStyle),
     flattenedStyle,
   ]
@@ -185,7 +191,6 @@ function RichTextTag({
   selectable?: boolean
   authorHandle?: string
 } & TextStyleProp) {
-  const t = useTheme()
   const {_} = useLingui()
   const control = useTagMenuControl()
   const {
@@ -239,14 +244,10 @@ function RichTextTag({
           onFocus={onFocus}
           onBlur={onBlur}
           style={[
-            web({
-              cursor: 'pointer',
-            }),
-            {color: t.palette.primary_500},
+            web({cursor: 'pointer'}),
             (hovered || focused || pressed) && {
               ...web({outline: 0}),
               textDecorationLine: 'underline',
-              textDecorationColor: t.palette.primary_500,
             },
             style,
           ]}>
